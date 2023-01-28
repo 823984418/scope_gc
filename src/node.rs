@@ -1,4 +1,4 @@
-use crate::node::State::{New, Trace, Unknown};
+use crate::node::State::{New, Trace};
 use crate::target::{RefSet, Target};
 use std::cell::Cell;
 use std::fmt::{Debug, Formatter};
@@ -15,12 +15,12 @@ pub enum State {
 
     /// 强可达
     Strong,
-    
-    /// 引用根
-    Root,
-    
+
     /// 已追踪
     Trace,
+
+    /// 引用根
+    Root,
 }
 
 pub struct NodeHead {
@@ -133,10 +133,7 @@ unsafe impl<'gc, T: Target> NodeTrait<'gc> for Node<'gc, T> {
 
     #[inline(always)]
     unsafe fn mark_and_collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
-        match self.head.marker.get() {
-            Unknown => {
-                unreachable!();
-            }
+        match self.head.get_marker() {
             Trace => {
                 self.head.marker.set(max);
                 self.ref_set.collect(stack, max);
@@ -144,7 +141,9 @@ unsafe impl<'gc, T: Target> NodeTrait<'gc> for Node<'gc, T> {
             Root => {
                 self.ref_set.collect(stack, max);
             }
-            _ => {}
+            _ => {
+                unreachable!();
+            }
         }
     }
 

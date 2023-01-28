@@ -48,6 +48,22 @@ mod tests {
             x.ref_set().set_ref(y.deref());
             y.ref_set().set_ref(x.deref());
             println!("{:#?}", gc);
+            drop(x);
+            drop(y);
+            gc.clear();
+
+            let p1 = Instant::now();
+
+            for _ in 0..1000000 {
+                gc.new(A {});
+            }
+
+            let p2 = Instant::now();
+            gc.clear();
+            let p3 = Instant::now();
+            println!("alloc {:.4?}", p2 - p1);
+            println!("clear {:.4?}", p3 - p2);
+            // println!("{:#?}", gc);
         });
     }
 }

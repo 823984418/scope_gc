@@ -5,7 +5,7 @@ use std::cell::Cell;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ptr::NonNull;
-use State::{Trace, Unknown};
+use State::Trace;
 
 /// 可以被 GC 管理的数据部分
 pub trait Target {
@@ -69,13 +69,12 @@ unsafe impl<'gc, T: ?Sized + NodeTrait<'gc>> RefSet<'gc> for StrongRef<'gc, T> {
             cell: Cell::new(None),
         }
     }
-    
+
     #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, _max: State) {
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
         if let Some(r) = self.cell.get() {
             let r = r.as_ref();
-            // fixme max
-            if NodeHead::from_node_trait(r).get_marker() == Unknown {
+            if NodeHead::from_node_trait(r).get_marker() < max {
                 NodeHead::from_node_trait(r).set_marker(Trace);
                 stack.push(r.as_dyn_node());
             }
