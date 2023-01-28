@@ -7,7 +7,7 @@ use State::Root;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum State {
-    /// 未知/不可达
+    /// 未知
     Unknown,
 
     /// 强可达
