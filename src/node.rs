@@ -36,22 +36,27 @@ impl NodeHead {
         }
     }
 
+    #[inline(always)]
     pub unsafe fn set_marker(&self, state: State) {
         self.marker.set(state);
     }
 
+    #[inline(always)]
     pub unsafe fn get_marker(&self) -> State {
         self.marker.get()
     }
 
+    #[inline(always)]
     pub unsafe fn inc_root(&self) {
         self.root.set(self.root.get() + 1);
     }
 
+    #[inline(always)]
     pub unsafe fn dec_root(&self) {
         self.root.set(self.root.get() - 1);
     }
 
+    #[inline(always)]
     pub fn from_node_trait<'s, 'gc, T: ?Sized + NodeTrait<'gc> + 's>(node: &'s T) -> &'s NodeHead {
         unsafe { &*(node as *const T as *const Self) }
     }
@@ -64,6 +69,7 @@ pub struct Node<'gc, T: Target> {
 }
 
 impl<'gc, T: Target> Node<'gc, T> {
+    #[inline(always)]
     pub fn ref_set(&self) -> &T::RefObject<'gc> {
         &self.ref_set
     }
@@ -110,18 +116,22 @@ impl<'gc, T: Target> Debug for Node<'gc, T> {
 }
 
 unsafe impl<'gc, T: Target> NodeTrait<'gc> for Node<'gc, T> {
+    #[inline(always)]
     fn as_dyn_node(&self) -> &dyn NodeTrait<'gc> {
         self
     }
 
+    #[inline(always)]
     fn head(&self) -> &NodeHead {
         &self.head
     }
 
+    #[inline(always)]
     fn root(&self) -> usize {
         self.head.root.get()
     }
 
+    #[inline(always)]
     unsafe fn mark_and_collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
         match self.head.marker.get() {
             Unknown => {
@@ -138,6 +148,7 @@ unsafe impl<'gc, T: Target> NodeTrait<'gc> for Node<'gc, T> {
         }
     }
 
+    #[inline(always)]
     unsafe fn pre_drop(&self) {
         self.value.pre_drop(&self.ref_set);
     }

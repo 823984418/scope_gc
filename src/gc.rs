@@ -11,6 +11,7 @@ use State::Trace;
 #[derive(Default, Copy, Clone, Debug)]
 pub struct Config {
     pub pre_drop: bool,
+    pub init_cap: usize,
 }
 
 #[inline(always)]
@@ -25,6 +26,7 @@ pub struct Gc<'gc, 's: 'gc> {
 }
 
 impl<'gc, 's: 'gc> Gc<'gc, 's> {
+    #[inline(always)]
     pub fn new<T: Target + 's>(self, value: T) -> RootRef<'gc, Node<'gc, T>> {
         unsafe {
             let node = Node::new_in_box(value);
@@ -33,11 +35,11 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
             RootRef::new(node_ref)
         }
     }
+
     pub fn reserve(self, cap: usize) {
         self.inner.borrow_mut().nodes.reserve(cap);
     }
 
-    pub fn pre_drop(self) {}
     pub fn clear(self) {
         unsafe {
             let mut inner = self.inner.borrow_mut();
@@ -96,7 +98,7 @@ impl<'gc, 's> GcInner<'gc, 's> {
     fn new(config: Config) -> Self {
         Self {
             config,
-            nodes: ManuallyDrop::new(Vec::new()),
+            nodes: ManuallyDrop::new(Vec::with_capacity(config.init_cap)),
         }
     }
 }

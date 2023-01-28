@@ -9,7 +9,7 @@ pub mod target;
 
 #[cfg(test)]
 mod tests {
-    use crate::gc::{scope_gc, Gc, Config};
+    use crate::gc::{scope_gc, Config, Gc};
     use crate::node::{Node, NodeTrait};
     use crate::target::{StrongRef, Target};
     use std::ops::Deref;
@@ -18,6 +18,7 @@ mod tests {
     struct A {}
 
     impl Drop for A {
+        #[inline(always)]
         fn drop(&mut self) {
             // println!("drop A");
         }
@@ -29,6 +30,7 @@ mod tests {
 
     impl Target for A {
         type RefObject<'gc> = StrongRef<'gc, dyn NodeA<'gc>>;
+        #[inline(always)]
         unsafe fn pre_drop<'gc>(&self, _ref_set: &Self::RefObject<'gc>) {
             // println!("pre-drop A");
         }
@@ -36,7 +38,11 @@ mod tests {
 
     #[test]
     fn test() {
-        scope_gc(Config::default(), |gc: Gc| {
+        let config = Config {
+            pre_drop: false,
+            ..Default::default()
+        };
+        scope_gc(config, |gc: Gc| {
             let p1 = Instant::now();
 
             gc.reserve(10000000);
