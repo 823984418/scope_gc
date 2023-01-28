@@ -13,14 +13,14 @@ pub enum State {
     /// 新建
     New,
 
-    /// 以追踪
-    Trace,
-
     /// 强可达
     Strong,
-
+    
     /// 引用根
     Root,
+    
+    /// 已追踪
+    Trace,
 }
 
 pub struct NodeHead {

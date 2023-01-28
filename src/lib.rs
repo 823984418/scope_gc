@@ -43,26 +43,11 @@ mod tests {
             ..Default::default()
         };
         scope_gc(config, |gc: Gc| {
-            let p1 = Instant::now();
-
-            gc.reserve(10000000);
-
-            let p2 = Instant::now();
-
-            for i in 0..1000000 {
-                gc.new(A {});
-            }
-
-            let p3 = Instant::now();
-
-            gc.clear();
-
-            let p4 = Instant::now();
-
+            let x = gc.new(A {});
+            let y = gc.new(A {});
+            x.ref_set().set_ref(y.deref());
+            y.ref_set().set_ref(x.deref());
             println!("{:#?}", gc);
-            println!("reserve: {:.4?}", p2 - p1);
-            println!("alloc: {:.4?}", p3 - p2);
-            println!("clear: {:.4?}", p4 - p3);
         });
     }
 }

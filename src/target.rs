@@ -71,9 +71,10 @@ unsafe impl<'gc, T: ?Sized + NodeTrait<'gc>> RefSet<'gc> for StrongRef<'gc, T> {
     }
     
     #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, _max: State) {
         if let Some(r) = self.cell.get() {
             let r = r.as_ref();
+            // fixme max
             if NodeHead::from_node_trait(r).get_marker() == Unknown {
                 NodeHead::from_node_trait(r).set_marker(Trace);
                 stack.push(r.as_dyn_node());
@@ -103,7 +104,7 @@ unsafe impl<'gc> RefSet<'gc> for () {
     }
 
     #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, _max: State) {}
+    unsafe fn collect(&self, _stack: &mut Vec<&dyn NodeTrait<'gc>>, _max: State) {}
 }
 
 unsafe impl<'gc, A: RefSet<'gc>> RefSet<'gc> for (A,) {
