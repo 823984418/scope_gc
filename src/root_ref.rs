@@ -12,7 +12,7 @@ pub struct RootRef<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
 impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> RootRef<'gc, T> {
     pub fn new(r: &T) -> Self {
         unsafe {
-            r.head().inc_root();
+            NodeHead::from_node_trait(r).inc_root();
         }
         Self {
             _marker: PhantomData,
