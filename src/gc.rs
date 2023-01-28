@@ -60,7 +60,7 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
                 match NodeHead::from_node_trait(r).get_marker() {
                     Root | Trace => {
                         count += 1;
-                        r.mark_and_collect(&mut stack, Strong);
+                        r.mark_and_collect(&mut stack);
                     }
                     _ => {
                         unreachable!();

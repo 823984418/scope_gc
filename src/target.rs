@@ -1,3 +1,4 @@
+use crate::node::State::{Strong, Unknown};
 use crate::node::{NodeHead, NodeTrait, State};
 use crate::root_ref::RootRef;
 use std::array::from_fn;
@@ -19,7 +20,7 @@ pub trait Target {
 /// 对引用部分的要求
 pub unsafe trait RefSet<'gc>: Debug {
     unsafe fn build() -> Self;
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State);
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>);
 }
 
 pub struct StrongRef<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
@@ -71,10 +72,10 @@ unsafe impl<'gc, T: ?Sized + NodeTrait<'gc>> RefSet<'gc> for StrongRef<'gc, T> {
     }
 
     #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
         if let Some(r) = self.cell.get() {
             let r = r.as_ref();
-            if NodeHead::from_node_trait(r).get_marker() < max {
+            if NodeHead::from_node_trait(r).get_marker() == Unknown {
                 NodeHead::from_node_trait(r).set_marker(Trace);
                 stack.push(r.as_dyn_node());
             }
@@ -89,9 +90,9 @@ unsafe impl<'gc, T: RefSet<'gc>, const N: usize> RefSet<'gc> for [T; N] {
     }
 
     #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
         for i in self {
-            i.collect(stack, max);
+            i.collect(stack);
         }
     }
 }
@@ -103,7 +104,7 @@ unsafe impl<'gc> RefSet<'gc> for () {
     }
 
     #[inline(always)]
-    unsafe fn collect(&self, _stack: &mut Vec<&dyn NodeTrait<'gc>>, _max: State) {}
+    unsafe fn collect(&self, _stack: &mut Vec<&dyn NodeTrait<'gc>>) {}
 }
 
 unsafe impl<'gc, A: RefSet<'gc>> RefSet<'gc> for (A,) {
@@ -113,8 +114,8 @@ unsafe impl<'gc, A: RefSet<'gc>> RefSet<'gc> for (A,) {
     }
 
     #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
-        self.0.collect(stack, max);
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
+        self.0.collect(stack);
     }
 }
 
@@ -125,8 +126,8 @@ unsafe impl<'gc, A: RefSet<'gc>, B: RefSet<'gc>> RefSet<'gc> for (A, B) {
     }
 
     #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>, max: State) {
-        self.0.collect(stack, max);
-        self.1.collect(stack, max);
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
+        self.0.collect(stack);
+        self.1.collect(stack);
     }
 }
