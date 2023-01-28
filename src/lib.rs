@@ -9,7 +9,7 @@ pub mod target;
 
 #[cfg(test)]
 mod tests {
-    use crate::gc::{scope_gc, Gc};
+    use crate::gc::{scope_gc, Gc, Config};
     use crate::node::{Node, NodeTrait};
     use crate::target::{StrongRef, Target};
     use std::ops::Deref;
@@ -36,14 +36,14 @@ mod tests {
 
     #[test]
     fn test() {
-        scope_gc(|gc: Gc| {
+        scope_gc(Config::default(), |gc: Gc| {
             let p1 = Instant::now();
-            
+
             gc.reserve(10000000);
-            
+
             let p2 = Instant::now();
-            
-            for i in 0..10000000 {
+
+            for i in 0..1000000 {
                 gc.new(A {});
             }
 
@@ -54,9 +54,9 @@ mod tests {
             let p4 = Instant::now();
 
             println!("{:#?}", gc);
-            println!("reserve: {:.2?}", p2 - p1);
-            println!("alloc: {:.2?}", p3 - p2);
-            println!("clear: {:.2?}", p4 - p3);
+            println!("reserve: {:.4?}", p2 - p1);
+            println!("alloc: {:.4?}", p3 - p2);
+            println!("clear: {:.4?}", p4 - p3);
         });
     }
 }
