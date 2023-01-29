@@ -24,9 +24,15 @@ mod tests {
         }
     }
 
-    trait NodeA<'gc>: NodeTrait<'gc> {}
+    trait NodeA<'gc>: NodeTrait<'gc> {
+        fn inner(&self) -> &i32;
+    }
 
-    impl<'gc, 'n> NodeA<'gc> for Node<'gc, A<'n>> {}
+    impl<'gc, 'n> NodeA<'gc> for Node<'gc, A<'n>> {
+        fn inner(&self) -> &i32 {
+            &self.deref().0
+        }
+    }
 
     impl<'n> Target for A<'n> {
         type RefObject<'gc> = StrongRef<'gc, dyn NodeA<'gc>>;
@@ -44,8 +50,8 @@ mod tests {
         };
         let i = 1;
         scope_gc(config, |gc: Gc| {
-            let x = gc.forget(A(&i));
-            let y = gc.forget(A(&i));
+            let x = gc.new(A(&i));
+            let y = gc.new(A(&i));
             x.ref_set().set_ref(y.deref());
             y.ref_set().set_ref(x.deref());
             println!("{:#?}", gc);

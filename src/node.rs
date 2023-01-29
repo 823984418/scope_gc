@@ -2,6 +2,7 @@ use crate::node::State::{Trace, Unknown};
 use crate::target::{RefSet, Target};
 use std::cell::Cell;
 use std::fmt::{Debug, Formatter};
+use std::ops::Deref;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum State {
@@ -56,8 +57,8 @@ impl NodeHead {
 
 pub struct Node<'gc, T: Target> {
     head: NodeHead,
-    ref_set: T::RefObject<'gc>,
-    value: T,
+    pub ref_set: T::RefObject<'gc>,
+    pub value: T,
 }
 
 impl<'gc, T: Target> Node<'gc, T> {
@@ -73,6 +74,15 @@ impl<'gc, T: Target> Node<'gc, T> {
             ref_set: unsafe { T::RefObject::build() },
             value,
         }
+    }
+}
+
+impl<'gc, T: Target> Deref for Node<'gc, T> {
+    type Target = T;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        &self.value
     }
 }
 
