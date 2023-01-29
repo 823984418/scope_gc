@@ -14,7 +14,6 @@ pub enum State {
 
     /// 已追踪
     Trace,
-    
 }
 
 pub struct NodeHead {
@@ -69,12 +68,12 @@ impl<'gc, T: Target> Node<'gc, T> {
     }
 
     #[inline(always)]
-    pub(crate) unsafe fn new_in_box(value: T) -> Box<Self> {
-        Box::new(Self {
+    pub(crate) unsafe fn new(value: T) -> Self {
+        Self {
             head: NodeHead::new(),
             ref_set: unsafe { T::RefObject::build() },
             value,
-        })
+        }
     }
 
     #[inline(always)]

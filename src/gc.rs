@@ -38,7 +38,7 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
     #[inline(always)]
     pub fn new<T: Target + 's>(self, value: T) -> RootRef<'gc, Node<'gc, T>> {
         unsafe {
-            let node = Node::new_in_box(value);
+            let node = Box::new(Node::new(value));
             let node_ref = transmute::<&'_ Node<'gc, T>, &'gc Node<'gc, T>>(node.deref());
             self.inner
                 .borrow_mut()
