@@ -1,12 +1,11 @@
-use crate::node::State::{Strong, Unknown};
-use crate::node::{NodeHead, NodeTrait, State};
+use crate::node::State::{Trace, Unknown};
+use crate::node::{NodeHead, NodeTrait};
 use crate::root_ref::RootRef;
 use std::array::from_fn;
 use std::cell::Cell;
 use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ptr::NonNull;
-use State::Trace;
 
 /// 可以被 GC 管理的数据部分
 pub trait Target {

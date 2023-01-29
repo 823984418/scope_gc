@@ -3,7 +3,6 @@ use crate::target::{RefSet, Target};
 use std::cell::Cell;
 use std::fmt::{Debug, Formatter};
 use std::mem::transmute;
-use State::Root;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum State {
@@ -15,9 +14,7 @@ pub enum State {
 
     /// 已追踪
     Trace,
-
-    /// 引用根
-    Root,
+    
 }
 
 pub struct NodeHead {
@@ -133,9 +130,6 @@ unsafe impl<'gc, T: Target> NodeTrait<'gc> for Node<'gc, T> {
         match self.head.get_marker() {
             Trace => {
                 self.head.marker.set(State::Strong);
-                self.ref_set.collect(stack);
-            }
-            Root => {
                 self.ref_set.collect(stack);
             }
             _ => {

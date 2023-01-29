@@ -39,7 +39,7 @@ mod tests {
     #[test]
     fn test() {
         let config = Config {
-            pre_drop: false,
+            pre_drop: true,
             ..Default::default()
         };
         scope_gc(config, |gc: Gc| {
@@ -54,7 +54,7 @@ mod tests {
 
             let p1 = Instant::now();
 
-            for _ in 0..1000000 {
+            for _ in 0..10000000 {
                 gc.new(A {});
             }
 
@@ -63,7 +63,7 @@ mod tests {
             let p3 = Instant::now();
             println!("alloc {:.4?}", p2 - p1);
             println!("clear {:.4?}", p3 - p2);
-            // println!("{:#?}", gc);
+            println!("{:#?}", gc);
         });
     }
 }
