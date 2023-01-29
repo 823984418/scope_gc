@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Scope GC"
 keywords = ["gc"]
+repository = "https://github.com/823984418/scope_gc"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
