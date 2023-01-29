@@ -99,6 +99,8 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
                     None
                 }
             }));
+            
+            debug_assert_eq!(count, new.len());
 
             swap(&mut inner.nodes, &mut new);
         }
