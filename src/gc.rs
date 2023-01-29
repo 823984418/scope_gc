@@ -24,7 +24,7 @@ impl Default for Config {
 }
 
 #[inline(always)]
-pub fn scope_gc<F: for<'gc, 's> FnOnce(Gc<'gc, 's>) -> R, R>(config: Config, f: F) -> R {
+pub fn scope_gc<'s, F: for<'gc> FnOnce(Gc<'gc, 's>) -> R, R>(config: Config, f: F) -> R {
     let inner = RefCell::new(GcInner::new(config));
     f(Gc { inner: &inner })
 }
@@ -99,7 +99,7 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
                     None
                 }
             }));
-            
+
             debug_assert_eq!(count, new.len());
 
             swap(&mut inner.nodes, &mut new);

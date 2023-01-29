@@ -13,11 +13,12 @@ mod tests {
     use crate::node::{Node, NodeTrait};
     use crate::target::{StrongRef, Target};
     use std::ops::Deref;
+    use std::thread::scope;
     use std::time::Instant;
 
-    struct A {}
+    struct A<'n>(&'n i32);
 
-    impl Drop for A {
+    impl<'n> Drop for A<'n> {
         #[inline(always)]
         fn drop(&mut self) {
             // println!("drop A");
@@ -26,9 +27,9 @@ mod tests {
 
     trait NodeA<'gc>: NodeTrait<'gc> {}
 
-    impl<'gc> NodeA<'gc> for Node<'gc, A> {}
+    impl<'gc, 'n> NodeA<'gc> for Node<'gc, A<'n>> {}
 
-    impl Target for A {
+    impl<'n> Target for A<'n> {
         type RefObject<'gc> = StrongRef<'gc, dyn NodeA<'gc>>;
         #[inline(always)]
         unsafe fn pre_drop<'gc>(&self, _ref_set: &Self::RefObject<'gc>) {
@@ -42,9 +43,10 @@ mod tests {
             pre_drop: true,
             ..Default::default()
         };
+        let mut i = 1;
         scope_gc(config, |gc: Gc| {
-            let x = gc.new(A {});
-            let y = gc.new(A {});
+            let x = gc.new(A(&i));
+            let y = gc.new(A(&i));
             x.ref_set().set_ref(y.deref());
             y.ref_set().set_ref(x.deref());
             println!("{:#?}", gc);
@@ -55,7 +57,7 @@ mod tests {
             let p1 = Instant::now();
 
             for _ in 0..10000000 {
-                gc.new(A {});
+                gc.new(A(&i));
             }
 
             let p2 = Instant::now();
