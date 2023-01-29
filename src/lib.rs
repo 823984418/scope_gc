@@ -13,7 +13,6 @@ mod tests {
     use crate::node::{Node, NodeTrait};
     use crate::target::{StrongRef, Target};
     use std::ops::Deref;
-    use std::thread::scope;
     use std::time::Instant;
 
     struct A<'n>(&'n i32);
@@ -43,7 +42,7 @@ mod tests {
             pre_drop: true,
             ..Default::default()
         };
-        let mut i = 1;
+        let i = 1;
         scope_gc(config, |gc: Gc| {
             let x = gc.new(A(&i));
             let y = gc.new(A(&i));
