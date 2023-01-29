@@ -1,10 +1,10 @@
-use crate::node::State::{Trace, Unknown};
+use crate::node::State::{Strong, Trace, Unknown};
 use crate::node::{Node, NodeHead, NodeTrait};
 use crate::root_ref::RootRef;
 use crate::target::Target;
 use std::cell::RefCell;
 use std::fmt::{Debug, Formatter};
-use std::mem::{swap, take, transmute};
+use std::mem::{swap, take, transmute, ManuallyDrop};
 use std::ops::Deref;
 use std::ptr::NonNull;
 
@@ -12,6 +12,8 @@ use std::ptr::NonNull;
 pub struct Config {
     pub pre_drop: bool,
     pub init_cap: usize,
+    pub forget_cap: usize,
+    pub stack_factor: f32,
 }
 
 impl Default for Config {
@@ -19,6 +21,8 @@ impl Default for Config {
         Self {
             pre_drop: false,
             init_cap: 32,
+            forget_cap: 0,
+            stack_factor: 0.1,
         }
     }
 }
@@ -43,7 +47,30 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
             self.inner
                 .borrow_mut()
                 .nodes
-                .push(NonNull::new_unchecked(Box::into_raw(unsafe { transmute::<Box<dyn NodeTrait<'gc> + 'gc>, Box<dyn NodeTrait<'gc> + 's>>(node) })));
+                .push(NonNull::new_unchecked(Box::into_raw(transmute::<
+                    Box<dyn NodeTrait<'gc> + 'gc>,
+                    Box<dyn NodeTrait<'gc> + 's>,
+                >(
+                    node
+                ))));
+            RootRef::new(node_ref)
+        }
+    }
+
+    #[inline(always)]
+    pub fn forget<T: Target>(self, value: T) -> RootRef<'gc, Node<'gc, T>> {
+        unsafe {
+            let node = Box::new(ManuallyDrop::new(Node::new(value)));
+            let node_ref = transmute::<&'_ Node<'gc, T>, &'gc Node<'gc, T>>(node.deref());
+            self.inner
+                .borrow_mut()
+                .forgets
+                .push(NonNull::new_unchecked(Box::into_raw(transmute::<
+                    Box<ManuallyDrop<dyn NodeTrait<'gc> + 'gc>>,
+                    Box<ManuallyDrop<dyn NodeTrait<'gc> + 's>>,
+                >(
+                    node
+                ))));
             RootRef::new(node_ref)
         }
     }
@@ -52,26 +79,42 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
         self.inner.borrow_mut().nodes.reserve(cap);
     }
 
+    pub fn get_nodes(self) -> usize {
+        self.inner.borrow().nodes.len()
+    }
+    pub fn get_forgets(self) -> usize {
+        self.inner.borrow().forgets.len()
+    }
+
     pub fn clear(self) {
         unsafe {
             let mut inner = self.inner.borrow_mut();
 
-            let mut stack: Vec<&(dyn NodeTrait<'gc> + 'gc)> = Vec::with_capacity(inner.nodes.len());
-            stack.extend(inner.nodes.iter().filter_map(|&r| {
+            let mut stack = Vec::with_capacity(
+                ((inner.nodes.len() + inner.forgets.len()) as f32 * inner.config.stack_factor)
+                    as usize,
+            );
+
+            for &r in inner.nodes.iter() {
                 if r.as_ref().root() != 0 {
                     NodeHead::from_node_trait(r.as_ref()).set_marker(Trace);
-                    Some(r.as_ref())
+                    stack.push(r.as_ref());
                 } else {
                     NodeHead::from_node_trait(r.as_ref()).set_marker(Unknown);
-                    None
                 }
-            }));
+            }
+            for &r in inner.forgets.iter() {
+                if r.as_ref().root() != 0 {
+                    NodeHead::from_node_trait(r.as_ref().deref()).set_marker(Trace);
+                    stack.push(r.as_ref().deref())
+                } else {
+                    NodeHead::from_node_trait(r.as_ref().deref()).set_marker(Unknown);
+                }
+            }
 
-            let mut count = 0;
             while let Some(r) = stack.pop() {
                 match NodeHead::from_node_trait(r).get_marker() {
                     Trace => {
-                        count += 1;
                         r.mark_and_collect(&mut stack);
                     }
                     _ => {
@@ -80,29 +123,62 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
                 }
             }
 
-            let r = take(&mut inner.nodes);
-
+            let nodes = take(&mut inner.nodes);
             if inner.config.pre_drop {
-                for &i in &r {
-                    if NodeHead::from_node_trait(i.as_ref()).get_marker() == Unknown {
-                        i.as_ref().pre_drop();
+                let mut drop_count = 0;
+                for &i in nodes.iter() {
+                    match NodeHead::from_node_trait(i.as_ref()).get_marker() {
+                        Unknown => {
+                            drop_count += 1;
+                            i.as_ref().pre_drop();
+                        }
+                        Strong => {}
+                        Trace => unreachable!(),
                     }
                 }
+
+                let mut new_nodes =
+                    Vec::with_capacity(nodes.len() - drop_count + inner.config.init_cap);
+                new_nodes.extend(nodes.into_iter().filter(|x| {
+                    match NodeHead::from_node_trait(x.as_ref()).get_marker() {
+                        Unknown => {
+                            drop(Box::from_raw(x.as_ptr()));
+                            false
+                        }
+                        Strong => true,
+                        Trace => unreachable!(),
+                    }
+                }));
+
+                swap(&mut inner.nodes, &mut new_nodes);
+            } else {
+                let mut new_nodes = nodes
+                    .into_iter()
+                    .filter(
+                        |&i| match NodeHead::from_node_trait(i.as_ref()).get_marker() {
+                            Unknown => false,
+                            Strong => true,
+                            Trace => unreachable!(),
+                        },
+                    )
+                    .collect::<Vec<_>>();
+                new_nodes.reserve(inner.config.init_cap);
+                swap(&mut inner.nodes, &mut new_nodes);
             }
 
-            let mut new = Vec::with_capacity(count + inner.config.init_cap);
-            new.extend(r.into_iter().filter_map(|x| {
-                if NodeHead::from_node_trait(x.as_ref()).get_marker() != Unknown {
-                    Some(x)
-                } else {
-                    drop(Box::from_raw(x.as_ptr()));
-                    None
-                }
-            }));
-
-            debug_assert_eq!(count, new.len());
-
-            swap(&mut inner.nodes, &mut new);
+            let forgets = take(&mut inner.forgets);
+            let mut new_forgets = forgets
+                .into_iter()
+                .filter(
+                    |&i| match NodeHead::from_node_trait(i.as_ref().deref()).get_marker() {
+                        Unknown => false,
+                        Strong => true,
+                        Trace => unreachable!(),
+                    },
+                )
+                .collect::<Vec<_>>();
+            new_forgets.reserve(inner.config.forget_cap);
+            swap(&mut inner.forgets, &mut new_forgets);
         }
     }
 }
@@ -110,6 +186,7 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
 struct GcInner<'gc, 's: 'gc> {
     config: Config,
     nodes: Vec<NonNull<dyn NodeTrait<'gc> + 's>>,
+    forgets: Vec<NonNull<ManuallyDrop<dyn NodeTrait<'gc> + 's>>>,
 }
 
 impl<'gc, 's> GcInner<'gc, 's> {
@@ -117,6 +194,7 @@ impl<'gc, 's> GcInner<'gc, 's> {
         Self {
             config,
             nodes: Vec::with_capacity(config.init_cap),
+            forgets: Vec::with_capacity(config.forget_cap),
         }
     }
 }
@@ -157,6 +235,9 @@ unsafe impl<#[may_dangle] 'gc, 's: 'gc> Drop for GcInner<'gc, 's> {
                 }
             }
             for node in self.nodes.iter() {
+                drop(Box::from_raw(node.as_ptr()));
+            }
+            for node in self.forgets.iter() {
                 drop(Box::from_raw(node.as_ptr()));
             }
         }

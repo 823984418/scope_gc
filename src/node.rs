@@ -2,7 +2,6 @@ use crate::node::State::{Trace, Unknown};
 use crate::target::{RefSet, Target};
 use std::cell::Cell;
 use std::fmt::{Debug, Formatter};
-use std::mem::transmute;
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum State {

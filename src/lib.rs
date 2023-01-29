@@ -44,8 +44,8 @@ mod tests {
         };
         let i = 1;
         scope_gc(config, |gc: Gc| {
-            let x = gc.new(A(&i));
-            let y = gc.new(A(&i));
+            let x = gc.forget(A(&i));
+            let y = gc.forget(A(&i));
             x.ref_set().set_ref(y.deref());
             y.ref_set().set_ref(x.deref());
             println!("{:#?}", gc);

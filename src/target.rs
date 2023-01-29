@@ -13,6 +13,7 @@ pub trait Target {
     type RefObject<'gc>: RefSet<'gc>;
 
     /// 预析构函数
+    #[inline(always)]
     unsafe fn pre_drop<'gc>(&self, _ref_set: &Self::RefObject<'gc>) {}
 }
 
