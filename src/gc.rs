@@ -43,7 +43,7 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
             self.inner
                 .borrow_mut()
                 .nodes
-                .push(NonNull::new_unchecked(Box::into_raw(node.dyn_box())));
+                .push(NonNull::new_unchecked(Box::into_raw(unsafe { transmute::<Box<dyn NodeTrait<'gc> + 'gc>, Box<dyn NodeTrait<'gc> + 's>>(node) })));
             RootRef::new(node_ref)
         }
     }

@@ -75,14 +75,6 @@ impl<'gc, T: Target> Node<'gc, T> {
             value,
         }
     }
-
-    #[inline(always)]
-    pub(crate) fn dyn_box<'s: 'gc>(self: Box<Self>) -> Box<dyn NodeTrait<'gc> + 's>
-    where
-        T: 's,
-    {
-        unsafe { transmute::<Box<dyn NodeTrait<'gc> + 'gc>, Box<dyn NodeTrait<'gc> + 's>>(self) }
-    }
 }
 
 pub unsafe trait NodeTrait<'gc>: Debug {
