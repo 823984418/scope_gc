@@ -151,8 +151,10 @@ impl<'gc, 's> Debug for GcInner<'gc, 's> {
 unsafe impl<#[may_dangle] 'gc, 's: 'gc> Drop for GcInner<'gc, 's> {
     fn drop(&mut self) {
         unsafe {
-            for node in self.nodes.iter() {
-                node.as_ref().pre_drop();
+            if self.config.pre_drop {
+                for node in self.nodes.iter() {
+                    node.as_ref().pre_drop();
+                }
             }
             for node in self.nodes.iter() {
                 drop(Box::from_raw(node.as_ptr()));
