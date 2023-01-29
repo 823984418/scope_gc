@@ -4,14 +4,19 @@
 
 pub mod gc;
 pub mod node;
+pub mod raw_type;
 pub mod root_ref;
+pub mod strong_ref;
+pub mod strong_vec;
+pub mod struct_ref;
 pub mod target;
 
 #[cfg(test)]
 mod tests {
     use crate::gc::{scope_gc, Config, Gc};
     use crate::node::{Node, NodeTrait};
-    use crate::target::{StrongRef, Target};
+    use crate::strong_ref::StrongRef;
+    use crate::target::Target;
     use std::ops::Deref;
     use std::time::Instant;
 

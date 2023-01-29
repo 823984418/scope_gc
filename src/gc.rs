@@ -1,5 +1,6 @@
 use crate::node::State::{Strong, Trace, Unknown};
 use crate::node::{Node, NodeHead, NodeTrait};
+use crate::raw_type::RawType;
 use crate::root_ref::RootRef;
 use crate::target::Target;
 use std::cell::RefCell;
@@ -39,25 +40,23 @@ pub struct Gc<'gc, 's: 'gc> {
 }
 
 impl<'gc, 's: 'gc> Gc<'gc, 's> {
-    #[inline(always)]
     pub fn new<T: Target + 's>(self, value: T) -> RootRef<'gc, Node<'gc, T>> {
-        unsafe {
-            let node = Box::new(Node::new(value));
-            let node_ref = transmute::<&'_ Node<'gc, T>, &'gc Node<'gc, T>>(node.deref());
-            self.inner
-                .borrow_mut()
-                .nodes
-                .push(NonNull::new_unchecked(Box::into_raw(transmute::<
-                    Box<dyn NodeTrait<'gc> + 'gc>,
-                    Box<dyn NodeTrait<'gc> + 's>,
-                >(
-                    node
-                ))));
-            RootRef::new(node_ref)
-        }
+        unsafe { self.dangling(value) }
     }
 
-    #[inline(always)]
+    pub unsafe fn dangling<T: Target>(self, value: T) -> RootRef<'gc, Node<'gc, T>> {
+        let node = Box::new(Node::new(value));
+        let node_ref = transmute::<&'_ Node<'gc, T>, &'gc Node<'gc, T>>(node.deref());
+        self.inner
+            .borrow_mut()
+            .nodes
+            .push(NonNull::new_unchecked(Box::into_raw(transmute::<
+                Box<dyn NodeTrait<'gc> + 'gc>,
+                Box<dyn NodeTrait<'gc> + 's>,
+            >(node))));
+        RootRef::new(node_ref)
+    }
+
     pub fn forget<T: Target>(self, value: T) -> RootRef<'gc, Node<'gc, T>> {
         unsafe {
             let node = Box::new(ManuallyDrop::new(Node::new(value)));
@@ -75,14 +74,27 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
         }
     }
 
+    pub fn new_raw<T: 's>(self, value: T) -> RootRef<'gc, Node<'gc, RawType<T>>> {
+        self.new(RawType(value))
+    }
+
+    pub unsafe fn dangling_raw<T>(self, value: T) -> RootRef<'gc, Node<'gc, RawType<T>>> {
+        self.dangling(RawType(value))
+    }
+
+    pub fn forget_raw<T>(self, value: T) -> RootRef<'gc, Node<'gc, RawType<T>>> {
+        self.forget(RawType(value))
+    }
+
     pub fn reserve(self, cap: usize) {
         self.inner.borrow_mut().nodes.reserve(cap);
     }
 
-    pub fn get_nodes(self) -> usize {
+    pub fn get_node_count(self) -> usize {
         self.inner.borrow().nodes.len()
     }
-    pub fn get_forgets(self) -> usize {
+
+    pub fn get_forget_count(self) -> usize {
         self.inner.borrow().forgets.len()
     }
 

@@ -8,7 +8,7 @@
 struct A<'n>(&'n i32);
 ```
 
-要使得它可以被 GC 管理，需要为其实现 `scope_gc::target`
+要使得它可以被 GC 管理，需要为其实现 `scope_gc::target::Target`
 
 ```rust
 impl<'n> Target for A<'n> {
@@ -78,8 +78,9 @@ fn test() {
 ```
 
 `GC::new` 只能接受存活时间长于闭包的值，具体原因如后文所述
-使用 `GC::forget` 接受存活时间较短的值，但执行回收时仅仅回收内存，其预析构和析构函数均不会被调用
-
+使用 `GC::forget` 接受存活时间较短的值，但执行回收时仅仅回收内存，其预析构和析构函数均不会被调用  
+使用 `unsafe GC::dangling` 接受存活时间较短的值，且执行与 `GC::new` 同样的逻辑  
+使用 `GC::new_raw(x)` 其等价于 `GC::new(RawType(x))`，不过不推荐如此，在此情况下，使用来自 `Rc` 无疑是更好的选择
 
 ## 在 Rust 中引入 GC 所存在的问题
 

@@ -34,6 +34,7 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> Clone for RootRef<'gc, T> {
         Self::new(self)
     }
 }
+
 impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> Debug for RootRef<'gc, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_tuple("RootRef").field(&self.deref()).finish()
