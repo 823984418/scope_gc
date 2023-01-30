@@ -18,192 +18,37 @@ unsafe impl<'gc, T: RefSet<'gc>, const N: usize> RefSet<'gc> for [T; N] {
 
 unsafe impl<'gc> RefSet<'gc> for () {
     #[inline(always)]
-    unsafe fn build() -> Self {
-        ()
-    }
+    unsafe fn build() -> Self {}
 
     #[inline(always)]
     unsafe fn collect(&self, _stack: &mut Vec<&dyn NodeTrait<'gc>>) {}
 }
 
-unsafe impl<'gc, A: RefSet<'gc>> RefSet<'gc> for (A,) {
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (A::build(),)
-    }
+macro_rules! impl_ref_set_for_tuple {
+    ($($T:ident:$i:tt),*) => {
+        unsafe impl<'gc, $($T: RefSet<'gc>),*> RefSet<'gc> for ($($T,)*) {
+            #[inline(always)]
+            unsafe fn build() -> Self {
+                ($($T::build(),)*)
+            }
 
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-    }
+            #[inline(always)]
+            unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
+                $(self.$i.collect(stack);)*
+            }
+        }
+    };
 }
 
-unsafe impl<'gc, A: RefSet<'gc>, B: RefSet<'gc>> RefSet<'gc> for (A, B) {
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (A::build(), B::build())
-    }
-
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-        self.1.collect(stack);
-    }
-}
-
-unsafe impl<'gc, A: RefSet<'gc>, B: RefSet<'gc>, C: RefSet<'gc>> RefSet<'gc> for (A, B, C) {
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (A::build(), B::build(), C::build())
-    }
-
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-        self.1.collect(stack);
-        self.2.collect(stack);
-    }
-}
-
-unsafe impl<'gc, A: RefSet<'gc>, B: RefSet<'gc>, C: RefSet<'gc>, D: RefSet<'gc>> RefSet<'gc>
-    for (A, B, C, D)
-{
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (A::build(), B::build(), C::build(), D::build())
-    }
-
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-        self.1.collect(stack);
-        self.2.collect(stack);
-        self.3.collect(stack);
-    }
-}
-
-unsafe impl<'gc, A: RefSet<'gc>, B: RefSet<'gc>, C: RefSet<'gc>, D: RefSet<'gc>, E: RefSet<'gc>>
-    RefSet<'gc> for (A, B, C, D, E)
-{
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (A::build(), B::build(), C::build(), D::build(), E::build())
-    }
-
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-        self.1.collect(stack);
-        self.2.collect(stack);
-        self.3.collect(stack);
-        self.4.collect(stack);
-    }
-}
-
-unsafe impl<
-        'gc,
-        A: RefSet<'gc>,
-        B: RefSet<'gc>,
-        C: RefSet<'gc>,
-        D: RefSet<'gc>,
-        E: RefSet<'gc>,
-        F: RefSet<'gc>,
-    > RefSet<'gc> for (A, B, C, D, E, F)
-{
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (
-            A::build(),
-            B::build(),
-            C::build(),
-            D::build(),
-            E::build(),
-            F::build(),
-        )
-    }
-
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-        self.1.collect(stack);
-        self.2.collect(stack);
-        self.3.collect(stack);
-        self.4.collect(stack);
-        self.5.collect(stack);
-    }
-}
-
-unsafe impl<
-        'gc,
-        A: RefSet<'gc>,
-        B: RefSet<'gc>,
-        C: RefSet<'gc>,
-        D: RefSet<'gc>,
-        E: RefSet<'gc>,
-        F: RefSet<'gc>,
-        G: RefSet<'gc>,
-    > RefSet<'gc> for (A, B, C, D, E, F, G)
-{
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (
-            A::build(),
-            B::build(),
-            C::build(),
-            D::build(),
-            E::build(),
-            F::build(),
-            G::build(),
-        )
-    }
-
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-        self.1.collect(stack);
-        self.2.collect(stack);
-        self.3.collect(stack);
-        self.4.collect(stack);
-        self.5.collect(stack);
-        self.6.collect(stack);
-    }
-}
-
-unsafe impl<
-        'gc,
-        A: RefSet<'gc>,
-        B: RefSet<'gc>,
-        C: RefSet<'gc>,
-        D: RefSet<'gc>,
-        E: RefSet<'gc>,
-        F: RefSet<'gc>,
-        G: RefSet<'gc>,
-        H: RefSet<'gc>,
-    > RefSet<'gc> for (A, B, C, D, E, F, G, H)
-{
-    #[inline(always)]
-    unsafe fn build() -> Self {
-        (
-            A::build(),
-            B::build(),
-            C::build(),
-            D::build(),
-            E::build(),
-            F::build(),
-            G::build(),
-            H::build(),
-        )
-    }
-
-    #[inline(always)]
-    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
-        self.0.collect(stack);
-        self.1.collect(stack);
-        self.2.collect(stack);
-        self.3.collect(stack);
-        self.4.collect(stack);
-        self.5.collect(stack);
-        self.6.collect(stack);
-        self.7.collect(stack);
-    }
-}
+impl_ref_set_for_tuple!(A:0);
+impl_ref_set_for_tuple!(A:0, B:1);
+impl_ref_set_for_tuple!(A:0, B:1, C:2);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4, F:5);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4, F:5, G:6);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4, F:5, G:6, H:7);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4, F:5, G:6, H:7, I:8);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4, F:5, G:6, H:7, I:8, J:9);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4, F:5, G:6, H:7, I:8, J:9, K:10);
+impl_ref_set_for_tuple!(A:0, B:1, C:2, D:3, E:4, F:5, G:6, H:7, I:8, J:9, K:10, L:11);

@@ -5,6 +5,7 @@ use crate::root_ref::RootRef;
 use crate::target::Target;
 use std::cell::RefCell;
 use std::fmt::{Debug, Formatter};
+use std::marker::PhantomData;
 use std::mem::{swap, take, transmute, ManuallyDrop};
 use std::ops::Deref;
 use std::ptr::NonNull;
@@ -268,6 +269,7 @@ impl<'gc, 's: 'gc> Gc<'gc, 's> {
 }
 
 struct GcInner<'gc, 's: 'gc> {
+    _marker: PhantomData<*mut &'gc ()>,
     config: Config,
     nodes: Vec<NonNull<dyn NodeTrait<'gc> + 's>>,
     forgets: Vec<NonNull<ManuallyDrop<dyn NodeTrait<'gc> + 's>>>,
@@ -276,6 +278,7 @@ struct GcInner<'gc, 's: 'gc> {
 impl<'gc, 's> GcInner<'gc, 's> {
     unsafe fn new(config: Config) -> Self {
         Self {
+            _marker: PhantomData,
             config,
             nodes: Vec::with_capacity(config.init_cap),
             forgets: Vec::with_capacity(config.forget_cap),

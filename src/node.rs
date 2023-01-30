@@ -68,10 +68,14 @@ impl<'gc, T: Target> Node<'gc, T> {
     }
 
     #[inline(always)]
+    pub fn value(&self) -> &T {
+        &self.value
+    }
+
     pub(crate) unsafe fn new(value: T) -> Self {
         Self {
             head: NodeHead::new(),
-            ref_set: unsafe { T::RefObject::build() },
+            ref_set: T::RefObject::build(),
             value,
         }
     }
@@ -86,6 +90,12 @@ impl<'gc, T: Target> Deref for Node<'gc, T> {
     }
 }
 
+/// 此特征唯一由 [`Node`] 实现
+///
+/// # 安全
+///
+/// 用户实现它总是不安全的
+///
 pub unsafe trait NodeTrait<'gc>: Debug {
     fn as_dyn_node(&self) -> &dyn NodeTrait<'gc>;
 
@@ -102,7 +112,6 @@ impl<'gc, T: Target> Debug for Node<'gc, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut s = f.debug_struct("Node");
         s.field("#", &(self as *const _));
-        s.field("last_marker", &self.head.marker.get());
         s.field("root", &self.head.root.get());
         s.field("ref_set", &self.ref_set);
         s.finish()

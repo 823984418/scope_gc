@@ -1,5 +1,5 @@
-#![cfg_attr(feature = "_nightly", feature(unsize))]
-#![cfg_attr(feature = "_nightly", feature(coerce_unsized))]
+#![cfg_attr(feature = "_unsize", feature(unsize))]
+#![cfg_attr(feature = "_coerce_unsized", feature(coerce_unsized))]
 
 pub mod gc;
 pub mod node;
@@ -34,7 +34,7 @@ mod tests {
 
     impl<'gc, 'n> NodeA<'gc> for Node<'gc, A<'n>> {
         fn inner(&self) -> &i32 {
-            &self.deref().0
+            self.deref().0
         }
     }
 

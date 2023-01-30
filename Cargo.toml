@@ -1,6 +1,6 @@
 [package]
 name = "scope_gc"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 description = "Scope GC"
 keywords = ["gc"]
@@ -11,8 +11,10 @@ license = "MIT OR Apache-2.0"
 
 [features]
 
-# 开启 Rust nightly 特性
-_nightly = []
+_unsize = []
+_coerce_unsized = []
 
-# 允许 RootRef 转换 dyn NodeTrait
-root_ref_coerce_unsized = ["_nightly"]
+root_ref_coerce_unsized = [
+    "_unsize",
+    "_coerce_unsized",
+]

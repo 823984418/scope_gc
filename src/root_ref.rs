@@ -4,6 +4,10 @@ use std::marker::PhantomData;
 use std::ops::Deref;
 use std::ptr::NonNull;
 
+/// 外部根引用
+/// 
+/// 通过指向对象的引用计数判断是否为根引用
+/// 
 pub struct RootRef<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
     _marker: PhantomData<*mut &'gc ()>,
     ptr: NonNull<T>,
@@ -49,7 +53,7 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> Deref for RootRef<'gc, T> {
     }
 }
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "root_ref_coerce_unsized")]
 impl<'gc, T: ?Sized + std::marker::Unsize<U> + NodeTrait<'gc>, U: ?Sized + NodeTrait<'gc>>
     std::ops::CoerceUnsized<RootRef<'gc, U>> for RootRef<'gc, T>
 {
