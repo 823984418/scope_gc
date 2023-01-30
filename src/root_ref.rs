@@ -1,7 +1,7 @@
 use crate::node::{NodeHead, NodeTrait};
 use std::fmt::{Debug, Formatter};
-use std::marker::{PhantomData, Unsize};
-use std::ops::{CoerceUnsized, Deref};
+use std::marker::PhantomData;
+use std::ops::Deref;
 use std::ptr::NonNull;
 
 pub struct RootRef<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
@@ -49,7 +49,8 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> Deref for RootRef<'gc, T> {
     }
 }
 
-impl<'gc, T: ?Sized + Unsize<U> + NodeTrait<'gc>, U: ?Sized + NodeTrait<'gc>>
-    CoerceUnsized<RootRef<'gc, U>> for RootRef<'gc, T>
+#[cfg(feature = "nightly")]
+impl<'gc, T: ?Sized + std::marker::Unsize<U> + NodeTrait<'gc>, U: ?Sized + NodeTrait<'gc>>
+    std::ops::CoerceUnsized<RootRef<'gc, U>> for RootRef<'gc, T>
 {
 }

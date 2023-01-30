@@ -1,6 +1,5 @@
-#![feature(unsize)]
-#![feature(coerce_unsized)]
-#![feature(dropck_eyepatch)]
+#![cfg_attr(feature = "_nightly", feature(unsize))]
+#![cfg_attr(feature = "_nightly", feature(coerce_unsized))]
 
 pub mod gc;
 pub mod node;
