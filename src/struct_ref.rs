@@ -132,3 +132,78 @@ unsafe impl<
         self.5.collect(stack);
     }
 }
+
+unsafe impl<
+        'gc,
+        A: RefSet<'gc>,
+        B: RefSet<'gc>,
+        C: RefSet<'gc>,
+        D: RefSet<'gc>,
+        E: RefSet<'gc>,
+        F: RefSet<'gc>,
+        G: RefSet<'gc>,
+    > RefSet<'gc> for (A, B, C, D, E, F, G)
+{
+    #[inline(always)]
+    unsafe fn build() -> Self {
+        (
+            A::build(),
+            B::build(),
+            C::build(),
+            D::build(),
+            E::build(),
+            F::build(),
+            G::build(),
+        )
+    }
+
+    #[inline(always)]
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
+        self.0.collect(stack);
+        self.1.collect(stack);
+        self.2.collect(stack);
+        self.3.collect(stack);
+        self.4.collect(stack);
+        self.5.collect(stack);
+        self.6.collect(stack);
+    }
+}
+
+unsafe impl<
+        'gc,
+        A: RefSet<'gc>,
+        B: RefSet<'gc>,
+        C: RefSet<'gc>,
+        D: RefSet<'gc>,
+        E: RefSet<'gc>,
+        F: RefSet<'gc>,
+        G: RefSet<'gc>,
+        H: RefSet<'gc>,
+    > RefSet<'gc> for (A, B, C, D, E, F, G, H)
+{
+    #[inline(always)]
+    unsafe fn build() -> Self {
+        (
+            A::build(),
+            B::build(),
+            C::build(),
+            D::build(),
+            E::build(),
+            F::build(),
+            G::build(),
+            H::build(),
+        )
+    }
+
+    #[inline(always)]
+    unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
+        self.0.collect(stack);
+        self.1.collect(stack);
+        self.2.collect(stack);
+        self.3.collect(stack);
+        self.4.collect(stack);
+        self.5.collect(stack);
+        self.6.collect(stack);
+        self.7.collect(stack);
+    }
+}

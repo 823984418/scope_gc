@@ -7,6 +7,7 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
+/// 可以为 [`None`] 的内部强引用位
 pub struct StrongRef<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
     _marker: PhantomData<*mut &'gc ()>,
     cell: Cell<Option<NonNull<T>>>,

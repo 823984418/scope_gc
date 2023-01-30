@@ -7,11 +7,16 @@ use std::fmt::{Debug, Formatter};
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
+
+/// 一个边长的强引用数组
+/// 
 pub struct StrongVec<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
     _marker: PhantomData<*mut &'gc ()>,
     vec: RefCell<Vec<Cell<NonNull<T>>>>,
 }
+
 impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> StrongVec<'gc, T> {
+    #[inline(always)]
     pub fn get(&self, index: usize) -> Result<RootRef<'gc, T>, ()> {
         self.vec
             .borrow()
@@ -20,6 +25,7 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> StrongVec<'gc, T> {
             .ok_or(())
     }
 
+    #[inline(always)]
     pub fn set(&self, index: usize, r: &T) -> Result<(), ()> {
         self.vec
             .borrow()
@@ -42,7 +48,7 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> StrongVec<'gc, T> {
             .extend(i.into_iter().map(|i| Cell::new(NonNull::from(i))))
     }
 
-    pub fn get_all(&self) -> Vec<RootRef<'gc, T>> {
+    pub fn get_all<B: FromIterator<RootRef<'gc, T>>>(&self) -> B {
         self.vec
             .borrow()
             .iter()
