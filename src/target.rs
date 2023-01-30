@@ -1,4 +1,5 @@
 use crate::node::NodeTrait;
+use std::any::Any;
 use std::fmt::Debug;
 
 /// 可以被 GC 管理的数据部分
@@ -7,15 +8,15 @@ pub trait Target {
     type RefObject<'gc>: RefSet<'gc>;
 
     /// 预析构函数
-    /// 
+    ///
     /// 这将会在清理时由 GC 调用
-    /// 
+    ///
     /// # 安全
-    /// 
+    ///
     /// 用户不得调用
-    /// 
+    ///
     /// 实现必须保证期间任何引用对象持有的引用不会引起对象复活
-    /// 
+    ///
     #[inline(always)]
     unsafe fn pre_drop<'gc>(&self, _ref_set: &Self::RefObject<'gc>) {}
 }
@@ -55,4 +56,8 @@ pub unsafe trait RefSet<'gc>: Debug {
     /// 用户不得调用
     ///
     unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>);
+}
+
+impl Target for dyn Any {
+    type RefObject<'gc> = ();
 }

@@ -5,9 +5,9 @@ use std::ops::Deref;
 use std::ptr::NonNull;
 
 /// 外部根引用
-/// 
+///
 /// 通过指向对象的引用计数判断是否为根引用
-/// 
+///
 pub struct RootRef<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
     _marker: PhantomData<*mut &'gc ()>,
     ptr: NonNull<T>,
@@ -15,9 +15,7 @@ pub struct RootRef<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> {
 
 impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> RootRef<'gc, T> {
     pub fn new(r: &T) -> Self {
-        unsafe {
-            NodeHead::from_node_trait(r).inc_root();
-        }
+        NodeHead::from_node_trait(r).inc_root();
         Self {
             _marker: PhantomData,
             ptr: NonNull::from(r),
@@ -27,9 +25,7 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> RootRef<'gc, T> {
 
 impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> Drop for RootRef<'gc, T> {
     fn drop(&mut self) {
-        unsafe {
-            NodeHead::from_node_trait(self.deref().deref()).dec_root();
-        }
+        NodeHead::from_node_trait(self.deref().deref()).dec_root();
     }
 }
 
@@ -51,10 +47,4 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> Deref for RootRef<'gc, T> {
     fn deref(&self) -> &Self::Target {
         unsafe { self.ptr.as_ref() }
     }
-}
-
-#[cfg(feature = "root_ref_coerce_unsized")]
-impl<'gc, T: ?Sized + std::marker::Unsize<U> + NodeTrait<'gc>, U: ?Sized + NodeTrait<'gc>>
-    std::ops::CoerceUnsized<RootRef<'gc, U>> for RootRef<'gc, T>
-{
 }

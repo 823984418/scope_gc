@@ -30,31 +30,40 @@ impl NodeHead {
     }
 
     #[inline(always)]
-    pub unsafe fn set_marker(&self, state: State) {
+    pub(crate) fn set_marker(&self, state: State) {
         self.marker.set(state);
     }
 
     #[inline(always)]
-    pub unsafe fn get_marker(&self) -> State {
+    pub(crate) fn get_marker(&self) -> State {
         self.marker.get()
     }
 
     #[inline(always)]
-    pub unsafe fn inc_root(&self) {
+    pub(crate) fn inc_root(&self) {
         self.root.set(self.root.get() + 1);
     }
 
     #[inline(always)]
-    pub unsafe fn dec_root(&self) {
+    pub(crate) fn dec_root(&self) {
         self.root.set(self.root.get() - 1);
     }
 
     #[inline(always)]
-    pub fn from_node_trait<'s, 'gc, T: ?Sized + NodeTrait<'gc> + 's>(node: &'s T) -> &'s NodeHead {
+    pub(crate) fn from_node_trait<'s, 'gc, T: ?Sized + NodeTrait<'gc> + 's>(
+        node: &'s T,
+    ) -> &'s NodeHead {
+        // # 安全
+        //
+        // [`NodeTrait`] 只被 [`Node`] 实现
+        // [`Node`] 以 `C` 布局排列
+        // `head` 是 [`Node`] 的第一个成员
+        //
         unsafe { &*(node as *const T as *const Self) }
     }
 }
 
+#[repr(C)]
 pub struct Node<'gc, T: Target> {
     head: NodeHead,
     pub ref_set: T::RefObject<'gc>,
@@ -134,6 +143,12 @@ unsafe impl<'gc, T: Target> NodeTrait<'gc> for Node<'gc, T> {
         self.head.root.get()
     }
 
+    /// 收集此对象的引用情况
+    ///
+    /// # 安全
+    ///
+    /// 用户调用总是不安全的
+    ///
     #[inline(always)]
     unsafe fn mark_and_collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>) {
         match self.head.get_marker() {
@@ -147,6 +162,12 @@ unsafe impl<'gc, T: Target> NodeTrait<'gc> for Node<'gc, T> {
         }
     }
 
+    /// 调用对象管理值的 [`Target::pre_drop`]
+    ///
+    /// # 安全
+    ///
+    /// 用户调用总是不安全的
+    ///
     #[inline(always)]
     unsafe fn pre_drop(&self) {
         self.value.pre_drop(&self.ref_set);
