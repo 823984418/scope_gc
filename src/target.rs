@@ -1,5 +1,4 @@
 use crate::node::NodeTrait;
-use std::any::Any;
 use std::fmt::Debug;
 
 /// 可以被 GC 管理的数据部分
@@ -56,8 +55,4 @@ pub unsafe trait RefSet<'gc>: Debug {
     /// 用户不得调用
     ///
     unsafe fn collect(&self, stack: &mut Vec<&dyn NodeTrait<'gc>>);
-}
-
-impl Target for dyn Any {
-    type RefObject<'gc> = ();
 }

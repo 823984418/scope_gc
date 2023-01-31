@@ -20,6 +20,10 @@
 //! 使用 `unsafe GC::dangling` 接受存活时间较短的值，且执行与 `GC::new` 同样的逻辑  
 //! 使用 `GC::new_raw(x)` 其等价于 `GC::new(RawType(x))`，不过不推荐如此，在此情况下，使用来自 `Rc` 无疑是更好的选择
 //!
+
+#![cfg_attr(feature = "_unsize", feature(unsize))]
+#![cfg_attr(feature = "_coerce_unsized", feature(coerce_unsized))]
+
 pub mod gc;
 pub mod node;
 pub mod raw_type;

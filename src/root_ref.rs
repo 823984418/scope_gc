@@ -48,3 +48,9 @@ impl<'gc, T: ?Sized + NodeTrait<'gc> + 'gc> Deref for RootRef<'gc, T> {
         unsafe { self.ptr.as_ref() }
     }
 }
+
+#[cfg(feature = "root_ref_coerce_unsized")]
+impl<'gc, T: ?Sized + std::marker::Unsize<U> + NodeTrait<'gc>, U: ?Sized + NodeTrait<'gc>>
+    std::ops::CoerceUnsized<RootRef<'gc, U>> for RootRef<'gc, T>
+{
+}

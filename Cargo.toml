@@ -1,6 +1,6 @@
 [package]
 name = "scope_gc"
-version = "0.2.5"
+version = "0.2.6"
 edition = "2021"
 description = "Scope GC"
 keywords = ["gc"]
@@ -8,3 +8,13 @@ repository = "https://github.com/823984418/scope_gc"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+
+[features]
+
+_unsize = []
+_coerce_unsized = []
+
+root_ref_coerce_unsized = [
+    "_unsize",
+    "_coerce_unsized",
+]
